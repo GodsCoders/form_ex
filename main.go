@@ -2,16 +2,32 @@ package main
 
 import (
 	"fmt"
+	"form_ex/dbops"
 	"log"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rohanthewiz/logger"
 )
 
 func main() {
+	// Variable types (simple types on the left | aggregate types on the right
+	// int, float, string, bool   |   array, map, channel, structs, func def
+
+	// Example of treating a function as a variable
+	/*	var doYourThing  = func(input string) (output string) {
+			// fmt.Println("**-> output", output)
+			return
+		}
+
+		result := doYourThing("Mary")
+		fmt.Println(result)
+	*/
+
 	// Create a new web server
 	app := fiber.New()
 
-	// Define routes
+	// Define some routes
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Welcome to the Fiber web server!")
 	})
@@ -45,12 +61,24 @@ func main() {
 	// New route to handle form submission
 	app.Post("/submit", func(c *fiber.Ctx) error {
 		name := c.FormValue("name")
-		age := c.FormValue("age")
+		strAge := c.FormValue("age")
 
+		age, err := strconv.Atoi(strAge)
+		if err != nil {
+			fmt.Println("error converting age", err)
+		}
+
+		// Save the Person's info to the DB
+		err = dbops.SavePerson(name, age)
+		if err != nil {
+			logger.LogErr(err, "Error saving "+name)
+		}
+
+		// Render the results as HTML
 		resp := fmt.Sprintf(`
 			<body style="background-color: slategrey;font-weight: bold;">
 			<table border=1 cellpadding=3>
-				<tr><td style="color:#3adeda">Name: %s</td><td> Age: %s</td></tr>
+				<tr><td style="color:#3adeda">Name: %s</td><td> Age: %d</td></tr>
 			</table>
 			</body>`, name, age)
 
