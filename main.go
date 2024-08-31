@@ -5,6 +5,7 @@ import (
 	"form_ex/dbops"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rohanthewiz/logger"
@@ -37,11 +38,34 @@ func main() {
 		return c.SendString("Hello, " + name + "!")
 	})
 
+	app.Get("/show-persons", func(c *fiber.Ctx) error {
+		persons, err := dbops.GetPersons()
+		if err != nil {
+			html(c, "<p>There was an error: "+err.Error(), true)
+			return nil
+		}
+
+		const pre = `<body style="background-color: slategrey;font-weight: bold;">
+		<table border=1 cellpadding=3>`
+		const post = `</table></body>`
+
+		var rows []string
+		for _, person := range persons {
+			row := fmt.Sprintf(
+				`<tr><td style="color:#3adeda">Name: %s</td><td> Age: %d</td></tr>`,
+				person.Name, person.Age)
+			rows = append(rows, row)
+		}
+
+		html(c, pre+strings.Join(rows, "\n")+post, true)
+		return nil
+	})
+
 	// New route to serve the HTML form
 	app.Get("/form",
 		func(c *fiber.Ctx) error {
 			text := `
-			<body style="background-color: slategrey;font-weight: bold;">
+			<body style="background-color: #89a3bd;font-weight: bold;">
 			<form action="/submit" method="post">
 				<label for="name">Name:</label>
 				<input type="text" id="name" name="name" required><br><br>
